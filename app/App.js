@@ -2,62 +2,43 @@
  * Created by comyn on 16-10-29.
  */
 import React from 'react';
+import connect from 'react-redux/lib/components/connect';
 import NewTodo from './component/NewTodo';
 import List from './component/List';
 import Footer from './component/Footer';
+import * as Actions from './actions';
 
+@connect(state => ({todoApp: state.todoApp}))
 export default class App extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {todos: [], filter: 'todo', current: 0};
+        //this.state = {todos: [], filter: 'todo', current: 0};
         this.handleCreate = this.handleCreate.bind(this);
         this.handleComplete = this.handleComplete.bind(this);
         this.handleReopen = this.handleReopen.bind(this);
         this.handleChangeFilter = this.handleChangeFilter.bind(this);
-        this.getTodos();
     }
-
-    getTodos(filter = null) {
-        filter = filter ? filter : this.state.filter;
-        fetch(`/api/todo/${filter}`)
-            .then(resp => resp.json())
-            .then(json => {
-                if (json.code === 200) {
-                    this.setState({todos: json.todos})
-                }
-            });
-    }
-
+    
     handleCreate(value) {
-        fetch('/api/todo',
-            {method: 'POST', body: JSON.stringify({content: value})})
-            .then(resp => resp.json())
-            .then(json => {
-                if (json.code === 200) {
-                    this.getTodos()
-                }
-            }).catch(err => console.log(err))
+       this.props.dispatch(Actions.add(value));
     }
 
     handleComplete(id) {
-        fetch(`/api/todo/${id}/done`, {method: 'PUT'}).then(() => this.getTodos())
+        this.props.dispatch(Actions.done(id));
     }
 
     handleReopen(id) {
-        fetch(`/api/todo/${id}/reopen`, {method: 'PUT'}).then(() => this.getTodos())
+        this.props.dispatch(Actions.reopen(id))
     }
 
     handleChangeFilter(filter) {
-        if (filter === 'todo' || filter === 'all') {
-            this.setState({filter: filter});
-        }
-        this.getTodos(filter);
+        this.props.dispatch(Actions.filter(filter));
     }
 
     render() {
-        let todos = this.state.todos;
-        if (this.state.filter === 'todo') {
-            todos = this.state.todos.filter(it => !it.done)
+        let todos = this.props.todoApp.todos;
+        if (this.props.todoApp.filter === 'todo') {
+            todos = this.props.todoApp.todos.filter(it => !it.done)
         }
         return (
             <div style={{width: '80%', marginLeft: 'auto', marginRight: 'auto'}}>
@@ -65,7 +46,7 @@ export default class App extends React.Component {
                 <List todos={todos}
                       onComplete={this.handleComplete}
                       onReopen={this.handleReopen}/>
-                <Footer filter={this.state.filter} onChangeFilter={this.handleChangeFilter}/>
+                <Footer filter={this.props.todoApp.filter} onChangeFilter={this.handleChangeFilter}/>
             </div>
         )
     }

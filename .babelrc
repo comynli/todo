@@ -1,4 +1,4 @@
 {
   "presets": ["react", "latest", "stage-0"],
-  "plugins": ["react-hot-loader/babel"]
+  "plugins": ["react-hot-loader/babel", "transform-decorators-legacy"]
 }
