@@ -14,31 +14,44 @@ export default class App extends React.Component {
         this.handleComplete = this.handleComplete.bind(this);
         this.handleReopen = this.handleReopen.bind(this);
         this.handleChangeFilter = this.handleChangeFilter.bind(this);
+        this.getTodos();
+    }
+
+    getTodos(filter = null) {
+        filter = filter ? filter : this.state.filter;
+        fetch(`/api/todo/${filter}`)
+            .then(resp => resp.json())
+            .then(json => {
+                if (json.code === 200) {
+                    this.setState({todos: json.todos})
+                }
+            });
     }
 
     handleCreate(value) {
-        const todo = {content: value, done: false, id: this.state.current += 1};
-        const todos = this.state.todos;
-        todos.push(todo);
-        this.setState({todos: todos, current: todo.id});
+        fetch('/api/todo',
+            {method: 'POST', body: JSON.stringify({content: value})})
+            .then(resp => resp.json())
+            .then(json => {
+                if (json.code === 200) {
+                    this.getTodos()
+                }
+            }).catch(err => console.log(err))
     }
 
     handleComplete(id) {
-        const todos = this.state.todos;
-        todos.find(it => it.id === id).done = true;
-        this.setState({todos: todos});
+        fetch(`/api/todo/${id}/done`, {method: 'PUT'}).then(() => this.getTodos())
     }
 
     handleReopen(id) {
-        const todos = this.state.todos;
-        todos.find(it => it.id === id).done = false;
-        this.setState({todos: todos});
+        fetch(`/api/todo/${id}/reopen`, {method: 'PUT'}).then(() => this.getTodos())
     }
 
     handleChangeFilter(filter) {
         if (filter === 'todo' || filter === 'all') {
             this.setState({filter: filter});
         }
+        this.getTodos(filter);
     }
 
     render() {
@@ -47,7 +60,7 @@ export default class App extends React.Component {
             todos = this.state.todos.filter(it => !it.done)
         }
         return (
-            <div>
+            <div style={{width: '80%', marginLeft: 'auto', marginRight: 'auto'}}>
                 <NewTodo onCreate={this.handleCreate}/>
                 <List todos={todos}
                       onComplete={this.handleComplete}
